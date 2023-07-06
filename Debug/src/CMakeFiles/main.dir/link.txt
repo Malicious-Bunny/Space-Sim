@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/main.dir/application.cc.o CMakeFiles/main.dir/main.cc.o -o main  ../libglad.a -lglfw -lGL -lX11 -lpthread -lXrandr -lXi -ldl 
