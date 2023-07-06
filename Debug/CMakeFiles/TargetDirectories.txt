@@ -1,0 +1,6 @@
+/home/arch-angel/SpaceSim/Debug/CMakeFiles/glad.dir
+/home/arch-angel/SpaceSim/Debug/CMakeFiles/edit_cache.dir
+/home/arch-angel/SpaceSim/Debug/CMakeFiles/rebuild_cache.dir
+/home/arch-angel/SpaceSim/Debug/src/CMakeFiles/main.dir
+/home/arch-angel/SpaceSim/Debug/src/CMakeFiles/edit_cache.dir
+/home/arch-angel/SpaceSim/Debug/src/CMakeFiles/rebuild_cache.dir
