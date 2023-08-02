@@ -1,1 +1,1 @@
-## Please refer to the 'dev' branch for the latest changes!
+## Please refer to the 'Vulkan' branch for the latest changes!
