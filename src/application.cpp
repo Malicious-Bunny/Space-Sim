@@ -132,6 +132,7 @@ void Application::Run(Sync& syncObj) {
 		m_FrameInfo.camera              = m_Camera;
 		m_FrameInfo.globalDescriptorSet = globalUniforms[frameIndex]->GetDescriptorSet();
 		m_FrameInfo.gameObjects         = m_GameObjects;
+		m_FrameInfo.stars 				= m_Stars;
 
 		Update(m_FrameInfo);
 
@@ -153,8 +154,8 @@ void Application::Run(Sync& syncObj) {
                 // lights ubo
                 LightsUbo ubo;
                 ubo.numberOfLights    = 1;
-                ubo.lightColors[0]    = {1.0, 1.0, 1.0, 10.0f};
-                ubo.lightPositions[0] = glm::dvec3(0.0, -10.0, 0.0) - m_Camera.m_Translation;
+                ubo.lightColors[0]    = {1.0, 1.0, 1.0, 5.0f};
+                ubo.lightPositions[0] = m_LightSphere->GetObjectTransform().translation - m_Camera.m_Translation;
                 LightsUniform.GetUboBuffer(0)->WriteToBuffer(&ubo);
                 LightsUniform.GetUboBuffer(0)->Flush();
             }
@@ -195,14 +196,24 @@ void Application::LoadGameObjects() {
 
 	// ----------------- Object Creation -----------------------
 
-	Transform objTransform {};
-	objTransform.translation = { 0.0, 5.0, -10.0 };
-    objTransform.rotation = { m_SpaceshipRotationX, m_SpaceshipRotationY, m_SpaceshipRotationZ };
-	objTransform.scale       = glm::dvec3(1.0);
+	{
+		Transform objTransform {};
+		objTransform.translation = { 0.0, 5.0, -10.0 };
+		objTransform.rotation = { m_SpaceshipRotationX, m_SpaceshipRotationY, m_SpaceshipRotationZ };
+		objTransform.scale       = glm::dvec3(1.0);
 
-	m_Spaceship = std::make_shared<Object>(objInfo, objTransform, "../../assets/models/spaceship.obj", "../../assets/textures/spaceship_albedo.png", "../../assets/textures/spaceship_normal.png",
-	                                       "../../assets/textures/spaceship_metalic.png", "../../assets/textures/spaceship_roughness.png");
-	m_GameObjects.emplace(m_Spaceship->GetObjectID(), m_Spaceship);
+		m_Spaceship = std::make_shared<Object>(objInfo, objTransform, "../../assets/models/spaceship.obj", "../../assets/textures/spaceship_albedo.png", "../../assets/textures/spaceship_normal.png",
+											"../../assets/textures/spaceship_metalic.png", "../../assets/textures/spaceship_roughness.png");
+		m_GameObjects.emplace(m_Spaceship->GetObjectID(), m_Spaceship);
+	}
+	{
+		Transform objTransform {};
+		objTransform.translation = { 0.0, -1.0, -10.0 };
+		objTransform.rotation = { 0.0, 0.0, 0.0 };
+		objTransform.scale       = glm::dvec3(0.2);
+		m_LightSphere = std::make_shared<Object>(objInfo, objTransform, "../../assets/models/sphere.obj", "../../assets/textures/empty_roughness.jpg");
+		m_Stars.emplace(m_LightSphere->GetObjectID(), m_LightSphere);
+	}
 }
 
 void Application::RenderImGui(VkCommandBuffer& commandBuffer) {

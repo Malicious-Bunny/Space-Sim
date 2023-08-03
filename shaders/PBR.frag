@@ -134,7 +134,7 @@ void main() {
 	vec3 normal  = getNormalFromMap();
 	vec3 viewDir = normalize(vec3(0.0, 0.0, 0.0) - inWorldPos); // {0.0, 0.0, 0.0} is camera position which is always zero
 
-	// One is that the Fresnel-Schlick approximation is only really defined for dielectric or
+	// Fresnel-Schlick approximation is only really defined for dielectric or
 	// non-metal surfaces. For conductor surfaces (metals), calculating the base reflectivity
 	// with indices of refraction doesn't properly hold and we need to use a different Fresnel
 	// equation for conductors altogether

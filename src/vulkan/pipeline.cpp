@@ -36,9 +36,7 @@ void Pipeline::CreateShaderModule(const std::vector<char>& code, VkShaderModule*
 
 void Pipeline::Bind(VkCommandBuffer commandBuffer) { vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline); }
 
-PipelineConfigInfo Pipeline::CreatePipelineConfigInfo(uint32_t width, uint32_t height, VkPrimitiveTopology topology, VkCullModeFlags cullMode, bool depthTestEnable, bool blendingEnable) {
-	PipelineConfigInfo configInfo {};
-
+PipelineConfigInfo Pipeline::CreatePipelineConfigInfo(PipelineConfigInfo& configInfo, uint32_t width, uint32_t height, VkPrimitiveTopology topology, VkCullModeFlags cullMode, bool depthTestEnable, bool blendingEnable) {
 	configInfo.inputAssemblyInfo.sType    = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	configInfo.inputAssemblyInfo.topology = topology;
 	if(topology == VK_PRIMITIVE_TOPOLOGY_LINE_STRIP || topology == VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP) configInfo.inputAssemblyInfo.primitiveRestartEnable = VK_TRUE;

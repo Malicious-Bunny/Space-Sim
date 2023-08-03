@@ -54,8 +54,8 @@ public:
 
 	VkCommandBuffer BeginFrame();
 	void EndFrame();
-	void BeginSwapchainRenderPass(VkCommandBuffer commandBuffer, const glm::vec3& clearColor);
-	void EndSwapchainRenderPass(VkCommandBuffer commandBuffer);
+	void BeginRenderPass(VkCommandBuffer commandBuffer, const glm::vec3& clearColor, VkFramebuffer framebuffer, const VkRenderPass& renderPass);
+	void EndRenderPass(VkCommandBuffer commandBuffer);
 	void RenderGameObjects(FrameInfo& frameInfo);
 	void RenderSkybox(FrameInfo& frameInfo);
 
@@ -77,8 +77,11 @@ private:
 	std::unique_ptr<Swapchain> m_Swapchain;
 	std::vector<VkCommandBuffer> m_CommandBuffers;
 
-	std::unique_ptr<Pipeline> m_DefaultPipeline;
-	VkPipelineLayout m_DefaultPipelineLayout;
+	std::unique_ptr<Pipeline> m_StarsPipeline;
+	VkPipelineLayout m_StarsPipelineLayout;
+
+	std::unique_ptr<Pipeline> m_PBRPipeline;
+	VkPipelineLayout m_PBRPipelineLayout;
 
 	std::unique_ptr<Pipeline> m_SkyboxPipeline;
 	VkPipelineLayout m_SkyboxPipelineLayout;

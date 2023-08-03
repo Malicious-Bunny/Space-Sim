@@ -26,8 +26,8 @@ Object::Object(const ObjectInfo& objInfo, const Transform& objTransform, const s
 	m_Uniform = std::make_unique<Uniform>(m_Device, bindings, *objInfo.descriptorPool);
 }
 
-void Object::Draw(VkPipelineLayout layout, VkCommandBuffer commandBuffer) {
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 2, 1, &m_Uniform->GetDescriptorSet(), 0, nullptr);
+void Object::Draw(VkPipelineLayout layout, VkCommandBuffer commandBuffer, int firstSet) {
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, firstSet, 1, &m_Uniform->GetDescriptorSet(), 0, nullptr);
 
 	m_Model->Bind(commandBuffer);
 	m_Model->Draw(commandBuffer);

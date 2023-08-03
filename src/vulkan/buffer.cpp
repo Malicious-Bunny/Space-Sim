@@ -66,7 +66,6 @@ Buffer::Buffer(Device& device, VkDeviceSize instanceSize, uint32_t instanceCount
 }
 
 Buffer::~Buffer() {
-	vkDeviceWaitIdle(m_Device.GetDevice());
 	Unmap();
 	vkDestroyBuffer(m_Device.GetDevice(), m_Buffer, nullptr);
 	vkFreeMemory(m_Device.GetDevice(), m_Memory, nullptr);

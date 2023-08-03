@@ -4,7 +4,7 @@
 #include "image.h"
 
 #include <vector>
-#include <vulkan/vulkan_core.h>
+#include <vulkan/vulkan.h>
 
 enum FramebufferAttachment {
 	Depth,
@@ -13,8 +13,10 @@ enum FramebufferAttachment {
 
 class Framebuffer {
 public:
-	Framebuffer(Device& device, const std::vector<FramebufferAttachment>& attachmentsFormats, const VkRenderPass& renderPass, VkExtent2D& extent, VkFormat& depthFormat);
+	Framebuffer(Device& device, const std::vector<FramebufferAttachment> attachmentsFormats, VkRenderPass renderPass, VkExtent2D extent, VkFormat depthFormat);
 	~Framebuffer();
+
+	inline VkFramebuffer GetFramebuffer() { return m_Framebuffer; } 
 
 private:
 	void CreateColorAttachment();
@@ -23,6 +25,7 @@ private:
 	VkExtent2D m_Extent;
 	Device& m_Device;
 
+	std::vector<VkImageView> m_Attachments;
 	VkFramebuffer m_Framebuffer;
 	std::vector<Image> m_ColorAttachments;
 	std::vector<Image> m_DepthAttachments;

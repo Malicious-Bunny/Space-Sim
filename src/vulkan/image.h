@@ -16,8 +16,7 @@ public:
 	Image(Device& device, uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImageAspectFlagBits aspect);
 	Image(Device& device, const std::string& filepath);
 	~Image();
-	static void TransitionImageLayout(Device& device, const VkImage& image, const VkImageLayout& oldLayout, const VkImageLayout& newLayout);
-	static void TransitionImageLayout(Device& device, const VkImage& image, const VkImageLayout& oldLayout, const VkImageLayout& newLayout, const VkImageSubresourceRange& subresourceRange);
+	static void TransitionImageLayout(Device& device, const VkImage& image, const VkImageLayout& oldLayout, const VkImageLayout& newLayout, const VkImageSubresourceRange& subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	void CopyBufferToImage(VkBuffer buffer, uint32_t width, uint32_t height);
 
 	inline VkImage GetImage() { return m_Image; }

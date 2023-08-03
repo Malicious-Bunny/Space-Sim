@@ -29,7 +29,7 @@ public:
 
 	void Bind(VkCommandBuffer commandBuffer);
 
-	static PipelineConfigInfo CreatePipelineConfigInfo(uint32_t width, uint32_t height, VkPrimitiveTopology topology, VkCullModeFlags cullMode, bool depthTestEnable, bool blendingEnable);
+	static PipelineConfigInfo CreatePipelineConfigInfo(PipelineConfigInfo& configInfo, uint32_t width, uint32_t height, VkPrimitiveTopology topology, VkCullModeFlags cullMode, bool depthTestEnable, bool blendingEnable);
 	void CreatePipeline(const std::string& vertexPath, const std::string& fragmentPath, const PipelineConfigInfo& configInfo,
 	                    std::vector<VkVertexInputBindingDescription> bindingDesc     = std::vector<VkVertexInputBindingDescription>(),
 	                    std::vector<VkVertexInputAttributeDescription> attributeDesc = std::vector<VkVertexInputAttributeDescription>());

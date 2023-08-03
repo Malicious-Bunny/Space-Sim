@@ -20,4 +20,5 @@ struct FrameInfo {
 	Skybox* skybox;
 	VkDescriptorSet skyboxDescriptorSet;
 	Map gameObjects;
+	Map stars;
 };

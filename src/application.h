@@ -49,10 +49,12 @@ private:
 
 	std::unique_ptr<DescriptorPool> m_GlobalPool {};
 	Map m_GameObjects;
+	Map m_Stars;
 
 	Sampler m_Sampler {m_Device};
 
 	std::shared_ptr<Object> m_Spaceship;
+	std::shared_ptr<Object> m_LightSphere;
 	Skybox m_Skybox {m_Device, "../../assets/textures/stars"};
 
 	float m_SpaceshipRotationX = 0;

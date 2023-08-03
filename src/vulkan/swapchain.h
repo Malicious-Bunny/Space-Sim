@@ -2,6 +2,7 @@
 
 #include "device.h"
 #include "image.h"
+#include "framebuffer.h"
 
 #include <memory>
 #include <vector>
@@ -18,8 +19,10 @@ public:
 	Swapchain& operator=(const Swapchain&) = delete;
 
 	VkRenderPass GetGeometryRenderPass() { return m_GeometryRenderPass; }
+	VkRenderPass GetShadowMapRenderPass() { return m_ShadowMapRenderPass; }
 
-	VkFramebuffer GetFrameBuffer(int index) { return m_SwapchainFramebuffers[index]; }
+	VkFramebuffer GetGeometryFrameBuffer(int index);
+	VkFramebuffer GetShadowMapFrameBuffer(int index);
 
 	uint32_t GetWidth() { return m_SwapchainExtent.width; }
 
@@ -63,6 +66,8 @@ private:
 	std::vector<VkImage> m_PresentableImages;
 	std::vector<VkImageView> m_PresentableImageViews;
 
+	std::vector<std::shared_ptr<Framebuffer>> m_ShadowMapFramebuffer; // this has to be a pointer for some unknown to mankind reason...
+
 	std::vector<VkSemaphore> m_ImageAvailableSemaphores;
 	std::vector<VkSemaphore> m_RenderFinishedSemaphores;
 	std::vector<VkFence> m_InFlightFences;
@@ -72,4 +77,5 @@ private:
 	VkExtent2D m_SwapchainExtent;
 
 	VkRenderPass m_GeometryRenderPass;
+	VkRenderPass m_ShadowMapRenderPass;
 };
