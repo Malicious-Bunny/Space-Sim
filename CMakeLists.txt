@@ -11,10 +11,16 @@ include_directories(external/)
 include_directories(external/glm/)
 include_directories(external/imgui/)
 
+IF(WIN32)
+    set(Vulkan_LIBRARY "$ENV{VK_SDK_PATH}/Lib")
+    set(Vulkan_INCLUDE_DIR "$ENV{VK_SDK_PATH}/Include")
+    link_directories(lib)
+ENDIF()
+
 if (DEFINED VULKAN_SDK_PATH)
     set(Vulkan_INCLUDE_DIRS "${VULKAN_SDK_PATH}/Include")
-    set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib")
-    set(Vulkan_FOUND "True")
+    	set(Vulkan_LIBRARIES "${VULKAN_SDK_PATH}/Lib")
+    	set(Vulkan_FOUND "True")
 else()
     find_package(Vulkan REQUIRED)
     message(STATUS "Found Vulkan: $ENV{VULKAN_SDK}")
@@ -27,4 +33,12 @@ endif()
 
 add_subdirectory(external/glm)
 add_subdirectory(src/)
+
+set_target_properties(SpaceSim PROPERTIES FOLDER "src")
+
+set(SRC_SOURCE_GROUP "src/*.cpp")
+set(SRC_HEADER_GROUP "src/*.h")
+
+source_group(src FILES ${SRC_SOURCE_GROUP})
+source_group(src FILES ${SRC_HEADER_GROUP})
 

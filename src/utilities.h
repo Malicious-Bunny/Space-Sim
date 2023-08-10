@@ -13,11 +13,20 @@ template <typename T, typename... Rest> void HashCombine(std::size_t& seed, cons
 };
 
 #ifndef NDEBUG
+	#if defined(_WIN32)
+#	define ASSERT(condition)                                                                                                                   \
+		if(!(condition)) {                                                                                                                      \
+			std::cout << (std::string(#condition) + " ON LINE " + std::to_string(__LINE__) + " IN FILE " + std::string(__FILE__)) << std::endl; \
+			__debugbreak();                                                                                                                   \
+		}    // I believe this will be __debugbreak() on windows
+	#else
 #	define ASSERT(condition)                                                                                                                   \
 		if(!(condition)) {                                                                                                                      \
 			std::cout << (std::string(#condition) + " ON LINE " + std::to_string(__LINE__) + " IN FILE " + std::string(__FILE__)) << std::endl; \
 			__builtin_trap();                                                                                                                   \
 		}    // I believe this will be __debugbreak() on windows
+	#endif 
+
 #else
 #	define ASSERT(condition)
 #endif

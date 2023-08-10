@@ -1,4 +1,5 @@
 #include "framebuffer.h"
+#include <stdexcept>
 
 Framebuffer::Framebuffer(Device& device, const std::vector<FramebufferAttachment> attachmentsFormats, VkRenderPass renderPass, VkExtent2D extent, VkFormat depthFormat)
 : m_Device(device), m_Extent(extent), m_DepthFormat(depthFormat) {
