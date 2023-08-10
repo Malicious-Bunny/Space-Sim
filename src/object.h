@@ -38,8 +38,12 @@ struct Properties {};
 
 class Object {
 public:
-	Object(const ObjectInfo& objInfo, const Transform& objTransform, const std::string& modelFilepath, const std::string& albedoMap, const std::string& metallicMap, const std::string& normalMap,
-	       const std::string& roughnessMap);
+	Object(const ObjectInfo& objInfo, const Transform& objTransform, const std::string& modelFilepath, 
+		const std::string& albedoMap, 
+		const std::string& normalMap = "../../assets/textures/empty_normal.jpg",
+		const std::string& metallicMap = "../../assets/textures/empty_metallic.jpg",
+		const std::string& roughnessMap = "../../assets/textures/empty_roughness.jpg"
+	);
 	~Object() = default;
 
 	Properties& GetObjectProperties() { return m_Properties; }
@@ -48,7 +52,7 @@ public:
 
 	uint32_t GetObjectID() { return m_ID; }
 
-	void Draw(VkPipelineLayout layout, VkCommandBuffer commandBuffer);
+	void Draw(VkPipelineLayout layout, VkCommandBuffer commandBuffer, int firstSet);
 
 private:
 	Properties m_Properties;

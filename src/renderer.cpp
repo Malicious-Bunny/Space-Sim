@@ -3,6 +3,7 @@
 #include "vulkan/model.h"
 #include "imgui/backends/imgui_impl_glfw.h"
 #include "imgui/backends/imgui_impl_vulkan.h"
+#include "vulkan/pipeline.h"
 
 #include <array>
 #include <cassert>
@@ -21,8 +22,9 @@ Renderer::Renderer(Window& window, Device& device, VkDescriptorPool pool): m_Win
 
 Renderer::~Renderer() {
 	FreeCommandBuffers();
-	vkDestroyPipelineLayout(m_Device.GetDevice(), m_DefaultPipelineLayout, nullptr);
+	vkDestroyPipelineLayout(m_Device.GetDevice(), m_PBRPipelineLayout, nullptr);
 	vkDestroyPipelineLayout(m_Device.GetDevice(), m_SkyboxPipelineLayout, nullptr);
+	vkDestroyPipelineLayout(m_Device.GetDevice(), m_StarsPipelineLayout, nullptr);
 	m_CommandBuffers.clear();
 
     ImGui_ImplVulkan_Shutdown();
@@ -135,14 +137,14 @@ void Renderer::EndFrame() {
 	m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % Swapchain::MAX_FRAMES_IN_FLIGHT;
 }
 
-void Renderer::BeginSwapchainRenderPass(VkCommandBuffer commandBuffer, const glm::vec3& clearColor) {
+void Renderer::BeginRenderPass(VkCommandBuffer commandBuffer, const glm::vec3& clearColor, VkFramebuffer framebuffer, const VkRenderPass& renderPass) {
 	ASSERT(m_IsFrameStarted);                              // Can't call BeginSwapchainRenderPass while frame is not in progress
 	ASSERT(commandBuffer == GetCurrentCommandBuffer());    // Can't Begin Render pass on command buffer from different frame
 
 	VkRenderPassBeginInfo renderPassInfo {};
 	renderPassInfo.sType             = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass        = m_Swapchain->GetGeometryRenderPass();
-	renderPassInfo.framebuffer       = m_Swapchain->GetFrameBuffer(m_CurrentImageIndex);
+	renderPassInfo.renderPass        = renderPass;
+	renderPassInfo.framebuffer       = framebuffer;
 	renderPassInfo.renderArea.offset = {0, 0};
 	renderPassInfo.renderArea.extent = m_Swapchain->GetSwapchainExtent();
 	std::array<VkClearValue, 2> clearValues {};
@@ -168,7 +170,7 @@ void Renderer::BeginSwapchainRenderPass(VkCommandBuffer commandBuffer, const glm
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 }
 
-void Renderer::EndSwapchainRenderPass(VkCommandBuffer commandBuffer) {
+void Renderer::EndRenderPass(VkCommandBuffer commandBuffer) {
 	ASSERT(m_IsFrameStarted);                              // Can't call EndSwapchainRenderPass while frame is not in progress
 	ASSERT(commandBuffer == GetCurrentCommandBuffer());    // Can't end render pass on command buffer from different frame
 
@@ -178,8 +180,16 @@ void Renderer::EndSwapchainRenderPass(VkCommandBuffer commandBuffer) {
 void Renderer::Render(FrameInfo frameInfo, std::function<void(VkCommandBuffer& commandBuffer)> renderImGui) {
 	if(auto commandBuffer = BeginFrame()) {
 		frameInfo.commandBuffer = commandBuffer;
-		// ------------------- RENDER PASS -----------------
-		BeginSwapchainRenderPass(commandBuffer, {0.01f, 0.01f, 0.01f});
+
+		// SHADOW MAP PASS
+		BeginRenderPass(commandBuffer, {0.01f, 0.01f, 0.01f}, m_Swapchain->GetShadowMapFrameBuffer(m_CurrentFrameIndex),
+			m_Swapchain->GetShadowMapRenderPass());
+
+		EndRenderPass(commandBuffer);
+		
+		// ------------------- GEOMETRY RENDER PASS -----------------
+		BeginRenderPass(commandBuffer, {0.01f, 0.01f, 0.01f}, m_Swapchain->GetGeometryFrameBuffer(m_CurrentFrameIndex), 
+			m_Swapchain->GetGeometryRenderPass());
 
 		RenderSkybox(frameInfo);
 
@@ -187,26 +197,39 @@ void Renderer::Render(FrameInfo frameInfo, std::function<void(VkCommandBuffer& c
 
 		renderImGui(commandBuffer);
 
-		EndSwapchainRenderPass(commandBuffer);
+		EndRenderPass(commandBuffer);
 		EndFrame();
 	}
 }
 
 void Renderer::RenderGameObjects(FrameInfo& frameInfo) {
-	vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DefaultPipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+	vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PBRPipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
 
-	vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_DefaultPipelineLayout, 1, 1, &frameInfo.lightsDescriptorSet, 0, nullptr);
+	vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_PBRPipelineLayout, 1, 1, &frameInfo.lightsDescriptorSet, 0, nullptr);
 
+	m_PBRPipeline->Bind(frameInfo.commandBuffer);
 	for(std::pair<int, std::shared_ptr<Object>> obj : frameInfo.gameObjects) {
-		m_DefaultPipeline->Bind(frameInfo.commandBuffer);
 
 		PushConstantsPBR push {};
 		push.modelMatrix  = obj.second->GetObjectTransform().mat4(frameInfo.camera.m_Translation);
 		push.normalMatrix = glm::transpose(glm::inverse(glm::mat3(obj.second->GetObjectTransform().mat4(frameInfo.camera.m_Translation))));
 
-		vkCmdPushConstants(frameInfo.commandBuffer, m_DefaultPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantsPBR), &push);
+		vkCmdPushConstants(frameInfo.commandBuffer, m_PBRPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantsPBR), &push);
 
-		obj.second->Draw(m_DefaultPipelineLayout, frameInfo.commandBuffer);
+		obj.second->Draw(m_PBRPipelineLayout, frameInfo.commandBuffer, 2);
+	}
+
+	vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_StarsPipelineLayout, 0, 1, &frameInfo.globalDescriptorSet, 0, nullptr);
+
+	m_StarsPipeline->Bind(frameInfo.commandBuffer);
+	for(std::pair<int, std::shared_ptr<Object>> obj : frameInfo.stars) {
+
+		PushConstants push {};
+		push.modelMatrix  = obj.second->GetObjectTransform().mat4(frameInfo.camera.m_Translation);
+		
+		vkCmdPushConstants(frameInfo.commandBuffer, m_StarsPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &push);
+
+		obj.second->Draw(m_StarsPipelineLayout, frameInfo.commandBuffer, 1);
 	}
 }
 
@@ -233,6 +256,30 @@ void Renderer::RenderSkybox(FrameInfo& frameInfo) {
 
 void Renderer::CreatePipelineLayouts() {
 	//
+	// Stars Pipline layout
+	//
+	{
+		auto globalLayoutBuilder = DescriptorSetLayout::Builder(m_Device);
+		globalLayoutBuilder.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+		auto globalLayout = globalLayoutBuilder.Build();
+
+		auto texturesLayoutBuilder = DescriptorSetLayout::Builder(m_Device);
+		texturesLayoutBuilder.AddBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		texturesLayoutBuilder.AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		texturesLayoutBuilder.AddBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		texturesLayoutBuilder.AddBinding(3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+		auto textureLayout = texturesLayoutBuilder.Build();
+
+		VkPushConstantRange pushConstantRange {};
+		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		pushConstantRange.offset     = 0;
+		pushConstantRange.size       = sizeof(PushConstants);
+
+		std::vector<VkDescriptorSetLayout> descriptorSetLayouts {globalLayout->GetDescriptorSetLayout(), textureLayout->GetDescriptorSetLayout()};
+		Pipeline::CreatePipelineLayout(m_Device, descriptorSetLayouts, m_StarsPipelineLayout, &pushConstantRange);
+	}
+	
+	//
 	// PBR Pipline layout
 	//
 	{
@@ -257,7 +304,7 @@ void Renderer::CreatePipelineLayouts() {
 		pushConstantRange.size       = sizeof(PushConstantsPBR);
 
 		std::vector<VkDescriptorSetLayout> descriptorSetLayouts {globalLayout->GetDescriptorSetLayout(), lightsLayout->GetDescriptorSetLayout(), textureLayout->GetDescriptorSetLayout()};
-		Pipeline::CreatePipelineLayout(m_Device, descriptorSetLayouts, m_DefaultPipelineLayout, &pushConstantRange);
+		Pipeline::CreatePipelineLayout(m_Device, descriptorSetLayouts, m_PBRPipelineLayout, &pushConstantRange);
 	}
 
 	//
@@ -285,17 +332,32 @@ void Renderer::CreatePipelineLayouts() {
 
 void Renderer::CreatePipelines() {
 	//
+	// Stars Pipline
+	//
+	{
+		PipelineConfigInfo pipelineConfig{};
+		Pipeline::CreatePipelineConfigInfo(pipelineConfig, m_Swapchain->GetWidth(), m_Swapchain->GetHeight(), 
+			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, true, true
+		);
+		pipelineConfig.renderPass     = m_Swapchain->GetGeometryRenderPass();
+		pipelineConfig.pipelineLayout = m_StarsPipelineLayout;
+		m_StarsPipeline             = std::make_unique<Pipeline>(m_Device);
+		m_StarsPipeline->CreatePipeline("../../shaders/spv/star.vert.spv", "../../shaders/spv/star.frag.spv", pipelineConfig, Model::Vertex::GetBindingDescriptions(),
+		                                  Model::Vertex::GetAttributeDescriptions());
+	}
+	
+	//
 	// PBR Pipline
 	//
 	{
 		PipelineConfigInfo pipelineConfig{};
-		Pipeline::CreatePipelineConfigInfo(pipelineConfig, m_Swapchain->GetWidth(), m_Swapchain->GetHeight(),
+		Pipeline::CreatePipelineConfigInfo(pipelineConfig, m_Swapchain->GetWidth(), m_Swapchain->GetHeight(), 
 			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, true, true
 		);
 		pipelineConfig.renderPass     = m_Swapchain->GetGeometryRenderPass();
-		pipelineConfig.pipelineLayout = m_DefaultPipelineLayout;
-		m_DefaultPipeline             = std::make_unique<Pipeline>(m_Device);
-		m_DefaultPipeline->CreatePipeline("../../shaders/spv/PBR.vert.spv", "../../shaders/spv/PBR.frag.spv", pipelineConfig, Model::Vertex::GetBindingDescriptions(),
+		pipelineConfig.pipelineLayout = m_PBRPipelineLayout;
+		m_PBRPipeline             = std::make_unique<Pipeline>(m_Device);
+		m_PBRPipeline->CreatePipeline("../../shaders/spv/PBR.vert.spv", "../../shaders/spv/PBR.frag.spv", pipelineConfig, Model::Vertex::GetBindingDescriptions(),
 		                                  Model::Vertex::GetAttributeDescriptions());
 	}
 
@@ -304,8 +366,8 @@ void Renderer::CreatePipelines() {
 	//
 	{
 		PipelineConfigInfo pipelineConfig{};
-		Pipeline::CreatePipelineConfigInfo(pipelineConfig, m_Swapchain->GetWidth(), m_Swapchain->GetHeight(),
-			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_BACK_BIT, true, true
+		Pipeline::CreatePipelineConfigInfo(pipelineConfig, m_Swapchain->GetWidth(), m_Swapchain->GetHeight(), 
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_CULL_MODE_FRONT_BIT, false, false
 		);
 		pipelineConfig.renderPass = m_Swapchain->GetGeometryRenderPass();
 		pipelineConfig.pipelineLayout = m_SkyboxPipelineLayout;
