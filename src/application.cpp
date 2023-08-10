@@ -183,8 +183,6 @@ void Application::Run(Sync& syncObj) {
 void Application::Update(const FrameInfo& frameInfo) {}
 
 void Application::LoadGameObjects() {
-	m_Sampler.CreateSimpleSampler();
-
 	ObjectInfo objInfo;
 	objInfo.descriptorPool = m_GlobalPool.get();
 	objInfo.device         = &m_Device;

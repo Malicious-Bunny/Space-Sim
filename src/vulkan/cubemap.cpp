@@ -108,8 +108,6 @@ void Cubemap::CreateImageFromTexture(const std::array<std::string, 6>& filepaths
 
 	Image::TransitionImageLayout(m_Device, m_CubeMapImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresourceRange);
 
-	// Create sampler
-	m_CubeMapSampler.CreateCubemapSampler();
 	// Create image view
 	VkImageViewCreateInfo view {};
 	view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
