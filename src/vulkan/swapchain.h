@@ -39,7 +39,7 @@ public:
 
 	bool CompareSwapFormats(const Swapchain& swapChain) const { return swapChain.m_SwapchainDepthFormat == m_SwapchainDepthFormat && swapChain.m_SwapchainImageFormat == m_SwapchainImageFormat; }
 
-	float GetExtentAspectRatio() { return static_cast<float>(m_SwapchainExtent.width) / static_cast<float>(m_SwapchainExtent.height); }
+	float GetExtentAspectRatio() { return float(m_SwapchainExtent.width) / float(m_SwapchainExtent.height); }
 
 private:
 	void CreateSwapchain();

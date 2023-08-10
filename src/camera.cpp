@@ -5,10 +5,6 @@
 
 #include <iostream>
 
-void Camera::SetPerspective(const float& fov, const float& aspectRatio, const float& near, const float& far) {
-	m_Projection = glm::transpose(glm::perspective(glm::radians(fov), aspectRatio, near, far));
-}
-
 void printMat(const glm::mat4& mat) {
 	std::cout << "------------------------------------------------" << std::endl;
 	std::cout << " | " << mat[0][0] << ", " << mat[1][0] << ", " << mat[2][0] << ", " << mat[3][0] << " | " << std::endl;
@@ -16,6 +12,10 @@ void printMat(const glm::mat4& mat) {
 	std::cout << " | " << mat[0][2] << ", " << mat[1][2] << ", " << mat[2][2] << ", " << mat[3][2] << " | " << std::endl;
 	std::cout << " | " << mat[0][3] << ", " << mat[1][3] << ", " << mat[2][3] << ", " << mat[3][3] << " | " << std::endl;
 	std::cout << "------------------------------------------------" << std::endl;
+}
+
+void Camera::SetPerspective(const float& fov, const float& aspectRatio, const float& near, const float& far) {
+	m_Projection = glm::perspective(glm::radians(fov), aspectRatio, near, far);
 }
 
 void Camera::MoveCamera(const float& x, const float& y) {
@@ -43,7 +43,7 @@ void Camera::MoveCamera(const float& x, const float& y) {
 	lastMousePosX = x;
 	lastMousePosY = y;
 
-	m_View = toMat4(m_Orientation);
+	m_View = glm::toMat4(m_Orientation);
 
 	m_CameraFront = glm::vec3(m_View[0][2], m_View[1][2], m_View[2][2]);
 	m_CameraRight = glm::vec3(m_View[0][0], m_View[1][0], m_View[2][0]);

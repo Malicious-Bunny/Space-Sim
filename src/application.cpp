@@ -116,8 +116,6 @@ void Application::Run(Sync& syncObj) {
 	m_FrameInfo.skyboxDescriptorSet = skyboxUniform.GetDescriptorSet();
 	m_FrameInfo.lightsDescriptorSet = LightsUniform.GetDescriptorSet();
 
-	m_Camera.SetPerspective(25.0f, m_Renderer->GetAspectRatio(), 1.0f, 100.0f);
-
 	// Main Loop
 	while(!m_Window.ShouldClose()) {
 		m_Spaceship->GetObjectTransform().rotation.x = m_SpaceshipRotationX;
@@ -137,6 +135,7 @@ void Application::Run(Sync& syncObj) {
 
 		// Camera Update
 		Input::GetInput(m_Camera);
+		m_Camera.SetPerspective(45.0f, m_Renderer->GetAspectRatio(), 0.1f, 100.0f);
 		m_Camera.MoveCamera(Input::mouseX - m_Window.GetExtent().width / 2.0, Input::mouseY - m_Window.GetExtent().height / 2.0);
 
 		// UBO update
